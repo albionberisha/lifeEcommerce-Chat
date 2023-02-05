@@ -10,14 +10,14 @@ namespace lifeEcommerce.Hubs
     public class ChatHub : Hub
     {
         private readonly string _botUser;
-        private readonly IChatService _chatService;
+        //private readonly IChatService _chatService;
         private readonly IDictionary<string, UserConnection> _connections;
 
-        public ChatHub(IDictionary<string, UserConnection> connections, IChatService chatService)
+        public ChatHub(IDictionary<string, UserConnection> connections /*,IChatService chatService*/)
         {
             _botUser = "MyChat Bot";
             _connections = connections;
-            _chatService = chatService;
+            //_chatService = chatService;
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
