@@ -17,6 +17,8 @@ namespace lifeEcommerce.Data
         public DbSet<OrderDetails> OrderDetails { get; set; }
         public DbSet<ShoppingCard> ShoppingCards { get; set; }
         public DbSet<OrderData> OrderData { get; set; }
+        public DbSet<Chat> Chats { get; set; }
+        public DbSet<Message> Messages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

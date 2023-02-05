@@ -3,6 +3,7 @@ using lifeEcommerce.Data;
 using lifeEcommerce.Data.UnitOfWork;
 using lifeEcommerce.Helpers;
 using lifeEcommerce.Hubs;
+using lifeEcommerce.Models.Dtos.Chat;
 using lifeEcommerce.Models.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -56,10 +57,21 @@ var logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 
-builder.Services.AddSignalR(options =>
+builder.Services.AddSignalR();
+
+builder.Services.AddCors(options =>
 {
-    options.EnableDetailedErrors = true;
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
+
+builder.Services.AddSingleton<IDictionary<string, UserConnection>>(opts => new Dictionary<string, UserConnection>());
+
 
 builder.Services.AddAuthentication(options =>
 {
@@ -211,6 +223,8 @@ app.UseDetection();
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseCors();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -224,8 +238,7 @@ app.UseEndpoints(endpoints =>
         context.Response.Redirect("/swagger", permanent: false);
         await Task.CompletedTask;
     });
-    endpoints.MapHub<ChatHub>($"/{nameof(ChatHub)}");
-    endpoints.MapHub<NotificationHub>($"/{nameof(NotificationHub)}");
+    endpoints.MapHub<ChatHub>($"/chat");
     endpoints.MapControllers();
 });
 

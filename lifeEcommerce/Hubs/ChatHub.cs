@@ -1,52 +1,63 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using lifeEcommerce.Models.Dtos.Chat;
+using lifeEcommerce.Services.IService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace lifeEcommerce.Hubs
 {
+    //[Authorize]
     public class ChatHub : Hub
     {
-        #region Chat
+        private readonly string _botUser;
+        private readonly IChatService _chatService;
+        private readonly IDictionary<string, UserConnection> _connections;
 
-        public Task SendMessage(string user, string message)
+        public ChatHub(IDictionary<string, UserConnection> connections, IChatService chatService)
         {
-            return Clients.All.SendAsync("ReceiveMessage", user, message);
+            _botUser = "MyChat Bot";
+            _connections = connections;
+            _chatService = chatService;
         }
 
-        public Task SendMessageToCaller(string user, string message)
+        public override Task OnDisconnectedAsync(Exception exception)
         {
-            return Clients.Caller.SendAsync("ReceiveMessage", user, message);
+            if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
+            {
+                _connections.Remove(Context.ConnectionId);
+                Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"{userConnection.User} has left");
+                SendUsersConnected(userConnection.Room);
+            }
+
+            return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task JoinChat(string groupName)
+        public async Task JoinRoom(UserConnection userConnection)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.Room);
+
+            _connections[Context.ConnectionId] = userConnection;
+
+            await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"{userConnection.User} has joined {userConnection.Room}");
+
+            await SendUsersConnected(userConnection.Room);
         }
 
-        public Task SendMessageToGroup(string sender, string receiver, string message)
+        public async Task SendMessage(string message)
         {
-            return Clients.Group(receiver).SendAsync("ReceiveMessage", sender, message);
+            if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
+            {
+                await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", userConnection.User, message);
+            }
         }
 
-        #endregion Chat
-
-        #region Connect-Disconnect
-
-        [Authorize]
-        public override async Task OnConnectedAsync()
+        public Task SendUsersConnected(string room)
         {
-            var currentUserId = "";
-            await Groups.AddToGroupAsync(Context.ConnectionId, currentUserId);
-            await base.OnConnectedAsync();
-        }
+            var users = _connections.Values
+                .Where(c => c.Room == room)
+                .Select(c => c.User);
 
-        public override async Task OnDisconnectedAsync(Exception exception)
-        {
-            var currentUserId = "";
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, currentUserId);
-            await base.OnDisconnectedAsync(exception);
+            return Clients.Group(room).SendAsync("UsersInRoom", users);
         }
-
-        #endregion Connect-Disconnect
     }
 }

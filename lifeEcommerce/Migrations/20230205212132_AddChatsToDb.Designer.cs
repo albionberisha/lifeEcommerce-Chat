@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using lifeEcommerce.Data;
 
@@ -11,9 +12,11 @@ using lifeEcommerce.Data;
 namespace lifeEcommerce.Migrations
 {
     [DbContext(typeof(LifeEcommerceDbContext))]
-    partial class LifeEcommerceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230205212132_AddChatsToDb")]
+    partial class AddChatsToDb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
